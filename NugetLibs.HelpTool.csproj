@@ -8,15 +8,15 @@
     <PackageIconUrl>http://www.yshdevelop.club/static/images/common/ico.png?ver=4.37</PackageIconUrl>
     <PackageProjectUrl>http://www.yshdevelop.club</PackageProjectUrl>
     <PackageLicenseUrl>http://oa.yshdevelop.club/content/license.html</PackageLicenseUrl>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
-    <FileVersion>1.0.2.0</FileVersion>
-    <Version>1.0.2</Version>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
+    <Version>1.0.3</Version>
     <Authors>Longan</Authors>
     <PackageTags>Encrypt , WebRequest , IP , Redis , etc.</PackageTags>
     <PackageReleaseNotes>At present, the basic functions of encryption and decryption, network request, cache operation are added.</PackageReleaseNotes>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <RepositoryUrl>http://oa.yshdevelop.club</RepositoryUrl>
-    <RepositoryType>Sql Server</RepositoryType>
+    <RepositoryUrl>https://github.com/2070019559ysh/NugetLibs.HelpTool</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
