@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <Description>As a common help class library for projects, it provides common processing functions such as encryption, decryption, caching, etc.</Description>
+    <Copyright>Copy;YSH Provides Support;</Copyright>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageIconUrl>http://www.yshdevelop.club/static/images/common/ico.png?ver=4.37</PackageIconUrl>
+    <PackageProjectUrl>http://www.yshdevelop.club</PackageProjectUrl>
+    <PackageLicenseUrl>http://oa.yshdevelop.club/content/license.html</PackageLicenseUrl>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <FileVersion>1.0.2.0</FileVersion>
+    <Version>1.0.2</Version>
+    <Authors>Longan</Authors>
+    <PackageTags>Encrypt , WebRequest , IP , Redis , etc.</PackageTags>
+    <PackageReleaseNotes>At present, the basic functions of encryption and decryption, network request, cache operation are added.</PackageReleaseNotes>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <RepositoryUrl>http://oa.yshdevelop.club</RepositoryUrl>
+    <RepositoryType>Sql Server</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.495" />
+  </ItemGroup>
+
+</Project>
