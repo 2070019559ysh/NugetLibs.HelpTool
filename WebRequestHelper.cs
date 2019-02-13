@@ -13,7 +13,10 @@ using System.Threading.Tasks;
 
 namespace NugetLibs.HelpTool
 {
-    class WebRequestHelper
+    /// <summary>
+    /// 提供Web请求的帮助类
+    /// </summary>
+    public class WebRequestHelper
     {
         /// <summary>
         /// 发送Get请求并返回响应字符串
@@ -322,7 +325,7 @@ namespace NugetLibs.HelpTool
         }
 
         /// <summary>
-        /// 已POST请求方式下载文件
+        /// 以POST请求方式下载文件
         /// </summary>
         /// <param name="url">请求下载地址</param>
         /// <param name="filePathName">下载保存的包含路径的文件名，注意以最终返回文件名为准</param>
