@@ -36,8 +36,8 @@ namespace NugetLibs.HelpTool.Cache
         /// <summary>
         /// 实例化Redis帮助工具
         /// </summary>
+        /// <param name="readWriteHosts">连接池的新连接字符串；Key名前缀默认DefaultPrefix:值</param>
         /// <param name="dbNum">db连接数</param>
-        /// <param name="readWriteHosts">连接池的新连接字符串</param>
         public RedisHelper(string readWriteHosts, int dbNum)
         {
             DbNum = dbNum;
