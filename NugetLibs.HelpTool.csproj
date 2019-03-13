@@ -8,8 +8,8 @@
     <PackageIconUrl>http://www.yshdevelop.club/static/images/common/ico.png?ver=4.37</PackageIconUrl>
     <PackageProjectUrl>http://www.yshdevelop.club</PackageProjectUrl>
     <PackageLicenseUrl>http://oa.yshdevelop.club/content/license.html</PackageLicenseUrl>
-    <AssemblyVersion>1.0.3.0</AssemblyVersion>
-    <FileVersion>1.0.3.0</FileVersion>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <FileVersion>1.0.4.0</FileVersion>
     <Version>1.0.3</Version>
     <Authors>Longan</Authors>
     <PackageTags>Encrypt , WebRequest , IP , Redis , etc.</PackageTags>
@@ -17,6 +17,14 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <RepositoryUrl>https://github.com/2070019559ysh/NugetLibs.HelpTool</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>E:\Project\AspNetCore\NugetLibs\NugetLibs.HelpTool\NugetLibs.HelpTool.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>E:\Project\AspNetCore\NugetLibs\NugetLibs.HelpTool\NugetLibs.HelpTool.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
