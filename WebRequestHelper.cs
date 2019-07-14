@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -57,6 +58,52 @@ namespace NugetLibs.HelpTool
             myStreamReader.Dispose();
             myResponseStream.Dispose();
             return retString;
+        }
+
+        /// <summary>
+        /// 利用HttpClient进行GET请求
+        /// </summary>
+        /// <param name="url">请求Url，如：http://yshweb.wicp.net/Home?lg=zh-cn </param>
+        /// <param name="isDecompress">是否需要解压，默认false</param>
+        /// <returns>响应字符串</returns>
+        public static string HttpClientGet(string url, bool isDecompress = false)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36");
+                client.DefaultRequestHeaders.Add("Timeout", 30.ToString());
+                client.DefaultRequestHeaders.Add("KeepAlive", "true");
+
+                Task<HttpResponseMessage> responseMsgTask = client.GetAsync(url);
+                responseMsgTask.Wait();
+                string responseMsg;
+                if (isDecompress)
+                {
+                    Task<Stream> responseStream = responseMsgTask.Result.Content.ReadAsStreamAsync();
+                    GZipStream deZipStream = new GZipStream(responseStream.Result, CompressionMode.Decompress);
+                    StreamReader myStreamReader = new StreamReader(deZipStream, Encoding.UTF8);
+                    responseMsg = myStreamReader.ReadToEnd();
+                }
+                else
+                {
+                    Task<byte[]> responseContent = responseMsgTask.Result.Content.ReadAsByteArrayAsync();
+                    responseMsg = Encoding.UTF8.GetString(responseContent.Result);
+                }
+                return responseMsg;
+            }
+        }
+
+        /// <summary>
+        /// 利用HttpClient进行GET请求
+        /// </summary>
+        /// <param name="url">请求Url，如：http://yshweb.wicp.net/Home?lg=zh-cn </param>
+        /// <param name="isDecompress">是否需要解压，默认false</param>
+        /// <returns>响应结果对象</returns>
+        public static T HttpClientGet<T>(string url, bool isDecompress = false)
+        {
+            string resultStr = HttpClientGet(url, isDecompress);
+            T result = JsonConvert.DeserializeObject<T>(resultStr);
+            return result;
         }
 
         /// <summary>
