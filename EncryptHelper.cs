@@ -285,8 +285,7 @@ namespace NugetLibs.HelpTool
         /// </summary>  
         /// <param name="plainbytes">明文字节数组</param>  
         /// <param name="key">加密密钥支持128(16字节)、192(24字节)、256位(32字节)的key</param>  
-        /// <param name="iv">加密向量(16到19字节)</param>  
-        /// <param name="isBase64Code">是否是Base64编码，否则是16进制编码</param>  
+        /// <param name="iv">加密向量(16到19字节)</param>
         /// <param name="mode">加密模式</param>  
         /// <param name="padding">填充模式</param>  
         /// <returns>密文</returns>  
@@ -388,7 +387,7 @@ namespace NugetLibs.HelpTool
         /// <param name="isBase64Code">是否是Base64编码，否则是16进制编码</param>  
         /// <param name="mode">加密模式</param>  
         /// <param name="padding">填充模式</param>  
-        /// <returns>明文</returns>  
+        /// <returns>明文字节数组</returns>  
         public static byte[] AESDecryptToBytes(string encryptStr, string key = DefaultAESKey, string iv = DefaultAESIV, bool isBase64Code = true, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
         {
             byte[] bKey = Encoding.UTF8.GetBytes(key);
@@ -398,6 +397,42 @@ namespace NugetLibs.HelpTool
                 byteArray = Convert.FromBase64String(encryptStr);
             else
                 byteArray = ByteStrConvertHelper.ToBytes(encryptStr);
+
+            byte[] decrypt = null;
+            var aes = Rijndael.Create();
+            try
+            {
+                aes.Mode = mode;
+                aes.Padding = padding;
+                using (var mStream = new MemoryStream())
+                {
+                    using (var cStream = new CryptoStream(mStream, aes.CreateDecryptor(bKey, bIV), CryptoStreamMode.Write))
+                    {
+                        cStream.Write(byteArray, 0, byteArray.Length);
+                        cStream.FlushFinalBlock();
+                    }
+                    decrypt = mStream.ToArray();
+                }
+            }
+            catch { }
+            aes.Clear();
+
+            return decrypt;
+        }
+        /// <summary>  
+        /// AES解密  
+        /// </summary>  
+        /// <param name="encryptByte">密文字节数组</param>  
+        /// <param name="key">加密密钥支持128(16字节)、192(24字节)、256位(32字节)的key</param>  
+        /// <param name="iv">加密向量(16到19字节)</param>
+        /// <param name="mode">加密模式</param>  
+        /// <param name="padding">填充模式</param>  
+        /// <returns>明文字节数组</returns>  
+        public static byte[] AESDecryptToBytes(byte[] encryptByte, string key = DefaultAESKey, string iv = DefaultAESIV, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
+        {
+            byte[] bKey = Encoding.UTF8.GetBytes(key);
+            byte[] bIV = Encoding.UTF8.GetBytes(iv);
+            byte[] byteArray = encryptByte;
 
             byte[] decrypt = null;
             var aes = Rijndael.Create();
