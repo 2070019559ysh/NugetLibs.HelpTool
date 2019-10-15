@@ -33,6 +33,20 @@ namespace NugetLibs.HelpTool
         }
 
         /// <summary>
+        /// 发送Get请求并返回响应字节数组
+        /// </summary>
+        /// <param name="url">请求Url，如：http://yshweb.wicp.net/Home?lg=zh-cn </param>
+        /// <param name="contentType">输出缓存流的内容类型</param>
+        /// <returns>响应字节数组</returns>
+        public static MemoryStream HttpGetStream(string url,out string contentType)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
+            request.ContentType = "text/html;charset=UTF-8";
+            return GetResponseStream(request,out contentType);
+        }
+
+        /// <summary>
         /// 发送Get请求并返回响应结果对象
         /// </summary>
         /// <param name="url">请求Url，如：http://yshweb.wicp.net/Home?lg=zh-cn </param>
@@ -51,13 +65,47 @@ namespace NugetLibs.HelpTool
         /// <returns>响应字符串信息</returns>
         private static string GetResponse(HttpWebRequest request)
         {
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            Stream myResponseStream = response.GetResponseStream();
-            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("UTF-8"));
-            string retString = myStreamReader.ReadToEnd();
-            myStreamReader.Dispose();
-            myResponseStream.Dispose();
-            return retString;
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                Stream myResponseStream = response.GetResponseStream();
+                StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("UTF-8"));
+                string retString = myStreamReader.ReadToEnd();
+                myStreamReader.Dispose();
+                myResponseStream.Dispose();
+                return retString;
+            }
+        }
+
+        /// <summary>
+        /// 根据HttpWebRequest请求对象获取最终响应信息
+        /// </summary>
+        /// <param name="request">HttpWebRequest请求对象</param>
+        /// <param name="contentType">响应内容类型</param>
+        /// <returns>响应缓存流</returns>
+        private static MemoryStream GetResponseStream(HttpWebRequest request,out string contentType)
+        {
+            using (var response = request.GetResponse() as HttpWebResponse)
+            {
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    throw new Exception("远程访问失败HttpStatusCode：" + response.StatusCode);
+                }
+                else
+                {
+                    contentType = response.ContentType;
+
+                    var stream = response.GetResponseStream();
+                    var buffer = new byte[2048];
+                    int count;
+                    var ms = new MemoryStream();
+                    while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
+                    {
+                        ms.Write(buffer, 0, count);
+                    }
+                    ms.Position = 0; //流在输出之前一定要先定位到0.否则.读出的数据全都是0
+                    return ms;
+                }
+            }
         }
 
         /// <summary>
@@ -115,33 +163,7 @@ namespace NugetLibs.HelpTool
         /// <returns>响应字符串</returns>
         public static string PostHttp(string url, object body, string contentType = "application/json")
         {
-            string requestData = JsonConvert.SerializeObject(body);
-            using (HttpClient client = new HttpClient())
-            {
-                byte[] dataArray = Encoding.UTF8.GetBytes(requestData);
-                MemoryStream ms = new MemoryStream(dataArray.Length);
-                ms.Write(dataArray, 0, dataArray.Length);
-                ms.Position = 0;
-                //ms.Seek(0, SeekOrigin.Begin);//设置指针读取位置
-                HttpContent hc = new StreamContent(ms);
-
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("image/webp"));
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
-                hc.Headers.Add("UserAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36");
-                hc.Headers.Add("Timeout", 30.ToString());
-                hc.Headers.Add("KeepAlive", "true");
-                hc.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-
-                Task<HttpResponseMessage> responseMsgTask = client.PostAsync(url, hc);
-                responseMsgTask.Wait();
-                Task<byte[]> responseContent = responseMsgTask.Result.Content.ReadAsByteArrayAsync();
-                string responseMsg = Encoding.UTF8.GetString(responseContent.Result);
-                ms.Close();
-                return responseMsg;
-            }
+            return ClientHttp("Post", url, body, contentType);
         }
 
         /// <summary>
@@ -191,6 +213,119 @@ namespace NugetLibs.HelpTool
                 {
                     ex.Data.Add("ResponseMsg", responseMsg);//外面可以读取响应的原字符串
                     throw ex;
+                }
+                finally
+                {
+                    ms.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 利用HttpClient进行Delete请求
+        /// </summary>
+        /// <param name="url">请求Url，如：http://yshweb.wicp.net/Home?id=46218 </param>
+        /// <param name="isDecompress">是否需要解压，默认false</param>
+        /// <returns>响应字符串</returns>
+        public static string DeleteHttp(string url, bool isDecompress = false)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("UserAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36");
+                client.DefaultRequestHeaders.Add("Timeout", 30.ToString());
+                client.DefaultRequestHeaders.Add("KeepAlive", "true");
+
+                Task<HttpResponseMessage> responseMsgTask = client.DeleteAsync(url);
+                responseMsgTask.Wait();
+                string responseMsg;
+                if (isDecompress)
+                {
+                    Task<Stream> responseStream = responseMsgTask.Result.Content.ReadAsStreamAsync();
+                    GZipStream deZipStream = new GZipStream(responseStream.Result, CompressionMode.Decompress);
+                    StreamReader myStreamReader = new StreamReader(deZipStream, Encoding.UTF8);
+                    responseMsg = myStreamReader.ReadToEnd();
+                }
+                else
+                {
+                    Task<byte[]> responseContent = responseMsgTask.Result.Content.ReadAsByteArrayAsync();
+                    responseMsg = Encoding.UTF8.GetString(responseContent.Result);
+                }
+                return responseMsg;
+            }
+        }
+
+        /// <summary>
+        /// 发送Patch请求局部更新数据
+        /// </summary>
+        /// <param name="url">请求Url</param>
+        /// <param name="body">请求参数</param>
+        /// <param name="contentType">请求内容类型，可设置为application/x-www-form-urlencoded</param>
+        /// <returns>响应字符串</returns>
+        public static string PatchHttp(string url, object body, string contentType = "application/json")
+        {
+            return ClientHttp("Patch", url, body, contentType);
+        }
+
+        /// <summary>
+        /// 发送Put请求更新数据
+        /// </summary>
+        /// <param name="url">请求Url</param>
+        /// <param name="body">请求参数</param>
+        /// <param name="contentType">请求内容类型，可设置为application/x-www-form-urlencoded</param>
+        /// <returns>响应字符串</returns>
+        public static string PutHttp(string url, object body, string contentType = "application/json")
+        {
+            return ClientHttp("Put", url, body, contentType);
+        }
+
+        /// <summary>
+        /// 利用HttpClient发送Post、Put、Patch请求
+        /// </summary>
+        /// <param name="method">指定请求方式：Post、Put、Patch</param>
+        /// <param name="url">请求Url</param>
+        /// <param name="body">请求参数</param>
+        /// <param name="contentType">请求内容类型，可设置为application/x-www-form-urlencoded</param>
+        /// <returns>响应字符串</returns>
+        private static string ClientHttp(string method, string url, object body, string contentType = "application/json")
+        {
+            string requestData = JsonConvert.SerializeObject(body);
+            using (HttpClient client = new HttpClient())
+            {
+                byte[] dataArray = Encoding.UTF8.GetBytes(requestData);
+                MemoryStream ms = new MemoryStream(dataArray.Length);
+                ms.Write(dataArray, 0, dataArray.Length);
+                ms.Position = 0;//设置指针读取位置
+                HttpContent hc = new StreamContent(ms);
+
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("image/webp"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
+                hc.Headers.Add("UserAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36");
+                hc.Headers.Add("Timeout", 30.ToString());
+                hc.Headers.Add("KeepAlive", "true");
+                hc.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                try
+                {
+                    Task<HttpResponseMessage> responseMsgTask;
+                    if ("Put".Equals(method, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        responseMsgTask = client.PutAsync(url, hc);
+                    }
+                    else if ("Patch".Equals(method, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        responseMsgTask = client.PatchAsync(url, hc);
+                    }
+                    else
+                    {
+                        responseMsgTask = client.PostAsync(url, hc);
+                    }
+                    responseMsgTask.Wait();
+                    Task<byte[]> responseContent = responseMsgTask.Result.Content.ReadAsByteArrayAsync();
+                    string responseMsg = Encoding.UTF8.GetString(responseContent.Result);
+
+                    return responseMsg;
                 }
                 finally
                 {
