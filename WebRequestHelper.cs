@@ -337,6 +337,27 @@ namespace NugetLibs.HelpTool
         /// <summary>
         /// 以表单形式发送Post请求
         /// </summary>
+        /// <param name="url">请求Url</param>
+        /// <param name="body">请求参数</param>
+        /// <returns>响应结果字符串</returns>
+        public static string FormPostHttp(string url, IEnumerable<KeyValuePair<string, string>> body)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                using (FormUrlEncodedContent formUrlEncodedContent = new FormUrlEncodedContent(body))
+                {
+                    Task<HttpResponseMessage> responseMsgTask = client.PostAsync(url, formUrlEncodedContent);
+                    responseMsgTask.Wait();
+                    Task<byte[]> responseContent = responseMsgTask.Result.Content.ReadAsByteArrayAsync();
+                    string responseMsg = Encoding.UTF8.GetString(responseContent.Result);
+                    return responseMsg;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 以表单形式发送Post请求
+        /// </summary>
         /// <typeparam name="T">响应对象类型</typeparam>
         /// <param name="url">请求Url</param>
         /// <param name="body">请求参数</param>
@@ -358,6 +379,14 @@ namespace NugetLibs.HelpTool
                     }
                     catch (JsonReaderException ex)
                     {
+                        try
+                        {
+                            T result = (T)Convert.ChangeType(responseMsg, typeof(T));
+                            return result;
+                        }
+                        catch (Exception)
+                        {
+                        }
                         throw new JsonReaderException("请求远程响应内容异常：" + responseMsg + "；" + ex.Message);
                     }
                     catch (Exception ex)
