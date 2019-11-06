@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,6 +12,20 @@ namespace NugetLibs.HelpTool
     /// </summary>
     public static class QueryHelper
     {
+        /// <summary>
+        /// 获取对象的值字符串内容
+        /// </summary>
+        /// <param name="obj">值对象</param>
+        /// <returns>值字符串内容</returns>
+        private static string GetValStr(object obj)
+        {
+            if (obj == null) return null;
+            if (obj is string)
+                return obj.ToString();
+
+            return JsonConvert.SerializeObject(obj, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+        }
+
         /// <summary>
         /// 把具体对象转成键值对的查询字符串
         /// </summary>
@@ -26,22 +41,24 @@ namespace NugetLibs.HelpTool
             foreach (FieldInfo field in fields)
             {
                 object obj = field.GetValue(model);
-                if (obj == null || string.IsNullOrEmpty(obj.ToString())) continue;
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
                 if (queryBuilder.Length > 0)
-                    queryBuilder.AppendFormat("&{0}={1}", field.Name, obj.ToString());
+                    queryBuilder.AppendFormat("&{0}={1}", field.Name, value);
                 else
-                    queryBuilder.Append($"{field.Name}={obj.ToString()}");
+                    queryBuilder.Append($"{field.Name}={value}");
             }
             //获取公有属性的值
             PropertyInfo[] props = modelType.GetProperties();
             foreach (PropertyInfo pi in props)
             {
                 object obj = pi.GetValue(model, null);
-                if (obj == null || string.IsNullOrEmpty(obj.ToString())) continue;
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
                 if (queryBuilder.Length > 0)
-                    queryBuilder.AppendFormat("&{0}={1}", pi.Name, obj.ToString());
+                    queryBuilder.AppendFormat("&{0}={1}", pi.Name, value);
                 else
-                    queryBuilder.Append($"{pi.Name}={obj.ToString()}");
+                    queryBuilder.Append($"{pi.Name}={value}");
             }
             return queryBuilder.ToString();
         }
@@ -61,24 +78,88 @@ namespace NugetLibs.HelpTool
             foreach (FieldInfo field in fields)
             {
                 object obj = field.GetValue(model);
-                if (obj == null || string.IsNullOrEmpty(obj.ToString())) continue;
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
                 if (queryBuilder.Length > 0)
-                    queryBuilder.AppendFormat("&{0}={1}", field.Name, obj.ToString());
+                    queryBuilder.AppendFormat("&{0}={1}", field.Name, value);
                 else
-                    queryBuilder.Append($"{field.Name}={obj.ToString()}");
+                    queryBuilder.Append($"{field.Name}={value}");
             }
             //获取公有属性的值
             PropertyInfo[] props = typeof(T).GetProperties();
             foreach (PropertyInfo pi in props)
             {
                 object obj = pi.GetValue(model, null);
-                if (obj == null || string.IsNullOrEmpty(obj.ToString())) continue;
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
                 if (queryBuilder.Length > 0)
-                    queryBuilder.AppendFormat("&{0}={1}", pi.Name, obj.ToString());
+                    queryBuilder.AppendFormat("&{0}={1}", pi.Name, value);
                 else
-                    queryBuilder.Append($"{pi.Name}={obj.ToString()}");
+                    queryBuilder.Append($"{pi.Name}={value}");
             }
             return queryBuilder.ToString();
+        }
+
+        /// <summary>
+        /// 把具体对象转成键值对字典
+        /// </summary>
+        /// <typeparam name="T">对象类型</typeparam>
+        /// <param name="model">具体对象</param>
+        /// <returns>键值对的字典</returns>
+        public static Dictionary<string, string> ToDictionary<T>(T model)
+        {
+            Dictionary<string, string> queryDic = new Dictionary<string, string>();
+            if (model == null) return queryDic;
+            //获取公有字段的值
+            FieldInfo[] fields = typeof(T).GetFields();
+            foreach (FieldInfo field in fields)
+            {
+                object obj = field.GetValue(model);
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
+                queryDic.Add(field.Name, value);
+            }
+            //获取公有属性的值
+            PropertyInfo[] props = typeof(T).GetProperties();
+            foreach (PropertyInfo pi in props)
+            {
+                object obj = pi.GetValue(model, null);
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
+                queryDic.Add(pi.Name, value);
+            }
+            return queryDic;
+        }
+
+        /// <summary>
+        /// 把具体对象转成键值对字典
+        /// </summary>
+        /// <param name="modelType">对象类型</param>
+        /// <param name="model">具体对象</param>
+        /// <returns>键值对的字典</returns>
+        public static Dictionary<string,string> ToDictionary(object model, Type modelType)
+        {
+            Dictionary<string,string> queryDic = new Dictionary<string, string>();
+            if (model == null) return queryDic;
+            //获取公有字段的值
+            FieldInfo[] fields = modelType.GetFields();
+            foreach (FieldInfo field in fields)
+            {
+                object obj = field.GetValue(model);
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
+                queryDic.Add(field.Name, value);
+            }
+            //获取公有属性的值
+            PropertyInfo[] props = modelType.GetProperties();
+            foreach (PropertyInfo pi in props)
+            {
+                object obj = pi.GetValue(model, null);
+                string value = GetValStr(obj);
+                if (string.IsNullOrEmpty(value)) continue;
+                queryDic.Add(pi.Name, value);
+            }
+            return queryDic;
         }
 
         /// <summary>
