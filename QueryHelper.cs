@@ -22,8 +22,14 @@ namespace NugetLibs.HelpTool
             if (obj == null) return null;
             if (obj is string)
                 return obj.ToString();
-
-            return JsonConvert.SerializeObject(obj, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            try
+            {
+                return JsonConvert.SerializeObject(obj, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>
